@@ -20,11 +20,11 @@ if [ "$PRT" = "exit" ] || [ "$PRT" = "EXIT" ]
 then
 break
 fi
-sudo iptables -A FORWARD -i ens3 -o wg2 -p tcp --syn --dport "$PRT" -m conntrack --ctstate NEW -j ACCEPT
-sudo iptables -A FORWARD -i ens3 -o wg2 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
-sudo iptables -A FORWARD -i wg2 -o ens3 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+sudo iptables -A FORWARD -i ens3 -o wg0 -p tcp --syn --dport "$PRT" -m conntrack --ctstate NEW -j ACCEPT
+sudo iptables -A FORWARD -i ens3 -o wg0 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+sudo iptables -A FORWARD -i wg0 -o ens3 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 sudo iptables -t nat -A PREROUTING -i ens3 -p tcp --dport "$PRT" -j DNAT --to-destination 152.67.166.149
-sudo iptables -t nat -A POSTROUTING -o wg2 -p tcp --dport "$PRT" -d 152.67.166.149 -j SNAT --to-source 10.0.0.5
+sudo iptables -t nat -A POSTROUTING -o wg0 -p tcp --dport "$PRT" -d 152.67.166.149 -j SNAT --to-source 10.0.0.4
 sudo netfilter-persistent save
 echo
 done
@@ -39,11 +39,11 @@ if [ "$PRT" = "exit" ] || [ "$PRT" = "EXIT" ]
 then
 break
 fi
-sudo iptables -A FORWARD -i ens3 -o wg2 -p udp --dport "$PRT" -m conntrack --ctstate NEW -j ACCEPT
-sudo iptables -A FORWARD -i ens3 -o wg2 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
-sudo iptables -A FORWARD -i wg2 -o ens3 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+sudo iptables -A FORWARD -i ens3 -o wg0 -p udp --dport "$PRT" -m conntrack --ctstate NEW -j ACCEPT
+sudo iptables -A FORWARD -i ens3 -o wg0 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+sudo iptables -A FORWARD -i wg0 -o ens3 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 sudo iptables -t nat -A PREROUTING -i ens3 -p udp --dport "$PRT" -j DNAT --to-destination 152.67.166.149
-sudo iptables -t nat -A POSTROUTING -o wg2 -p udp --dport "$PRT" -d 152.67.166.149 -j SNAT --to-source 10.0.0.5
+sudo iptables -t nat -A POSTROUTING -o wg0 -p udp --dport "$PRT" -d 152.67.166.149 -j SNAT --to-source 10.0.0.4
 sudo netfilter-persistent save
 echo
 done
@@ -51,7 +51,7 @@ fi
 fi
 }
 
-FILE=/etc/wireguard/wg2.conf
+FILE=/etc/wireguard/wg0.conf
 if [ -f "$FILE" ]
 then
 echo "It seems wireguard is already configured."
@@ -70,13 +70,13 @@ wg pubkey < privatekey > publickey
 PRIVATEKEY=$(cat privatekey)
 PUBLICKEY=$(cat publickey)
 
-cat << WG > /etc/wireguard/wg2.conf
+cat << WG > /etc/wireguard/wg0.conf
 [Interface]
 PrivateKey = $PRIVATEKEY
-Address = 10.0.0.5/24
+Address = 10.0.0.4/24
 ListenPort = 51820
-PostUp = iptables -A FORWARD -i wg2 -j ACCEPT; iptables -t nat -A POSTROUTING -o ens3 -j MASQUERADE; ip6tables -A FORWARD -i wg2 -j ACCEPT; ip6tables -t nat -A POSTROUTING -o ens3 -j MASQUERADE
-PostDown = iptables -D FORWARD -i wg2 -j ACCEPT; iptables -t nat -D POSTROUTING -o ens3 -j MASQUERADE; ip6tables -D FORWARD -i wg2 -j ACCEPT; ip6tables -t nat -D POSTROUTING -o ens3 -j MASQUERADE
+PostUp = iptables -A FORWARD -i wg0 -j ACCEPT; iptables -t nat -A POSTROUTING -o ens3 -j MASQUERADE; ip6tables -A FORWARD -i wg0 -j ACCEPT; ip6tables -t nat -A POSTROUTING -o ens3 -j MASQUERADE
+PostDown = iptables -D FORWARD -i wg0 -j ACCEPT; iptables -t nat -D POSTROUTING -o ens3 -j MASQUERADE; ip6tables -D FORWARD -i wg0 -j ACCEPT; ip6tables -t nat -D POSTROUTING -o ens3 -j MASQUERADE
 SaveConfig = true
 WG
 
@@ -96,8 +96,8 @@ fire
 sudo ufw --force enable
 sudo systemctl restart ufw
 sudo ufw allow 51820/udp
-wg-quick up wg2
-sudo systemctl enable wg-quick@wg2
+wg-quick up wg0
+sudo systemctl enable wg-quick@wg0
 mkdir /client-config
 mkdir /client-keys
 
@@ -116,8 +116,8 @@ AllowedIPs = 0.0.0.0/0, ::/0
 Endpoint = $IPV4:51820
 _CLIENT_
 
-sudo wg set wg2 peer $(cat /client-keys/publickey) allowed-ips 152.67.166.149/32
-cat << _SAVE_ >> /etc/wireguard/wg2.conf
+sudo wg set wg0 peer $(cat /client-keys/publickey) allowed-ips 152.67.166.149/32
+cat << _SAVE_ >> /etc/wireguard/wg0.conf
 
 [Peer]
 PublicKey = $(cat /client-keys/publickey)
