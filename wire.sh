@@ -20,10 +20,10 @@ if [ "$PRT" = "exit" ] || [ "$PRT" = "EXIT" ]
 then
 break
 fi
-sudo iptables -A FORWARD -i eth0 -o wg0 -p tcp --syn --dport $PRT -m conntrack --ctstate NEW -j ACCEPT
-sudo iptables -A FORWARD -i eth0 -o wg0 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
-sudo iptables -A FORWARD -i wg0 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
-sudo iptables -t nat -A PREROUTING -i eth0 -p tcp --dport "$PRT" -j DNAT --to-destination 10.0.0.2
+sudo iptables -A FORWARD -i ens3 -o wg0 -p tcp --syn --dport "$PRT" -m conntrack --ctstate NEW -j ACCEPT
+sudo iptables -A FORWARD -i ens3 -o wg0 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+sudo iptables -A FORWARD -i wg0 -o ens3 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+sudo iptables -t nat -A PREROUTING -i ens3 -p tcp --dport "$PRT" -j DNAT --to-destination 10.0.0.2
 sudo iptables -t nat -A POSTROUTING -o wg0 -p tcp --dport "$PRT" -d 10.0.0.2 -j SNAT --to-source 10.0.0.1
 sudo netfilter-persistent save
 echo
@@ -39,10 +39,10 @@ if [ "$PRT" = "exit" ] || [ "$PRT" = "EXIT" ]
 then
 break
 fi
-sudo iptables -A FORWARD -i eth0 -o wg0 -p udp --dport $PRT -m conntrack --ctstate NEW -j ACCEPT
-sudo iptables -A FORWARD -i eth0 -o wg0 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
-sudo iptables -A FORWARD -i wg0 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
-sudo iptables -t nat -A PREROUTING -i eth0 -p udp --dport "$PRT" -j DNAT --to-destination 10.0.0.2
+sudo iptables -A FORWARD -i ens3 -o wg0 -p udp --dport "$PRT" -m conntrack --ctstate NEW -j ACCEPT
+sudo iptables -A FORWARD -i ens3 -o wg0 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+sudo iptables -A FORWARD -i wg0 -o ens3 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+sudo iptables -t nat -A PREROUTING -i ens3 -p udp --dport "$PRT" -j DNAT --to-destination 10.0.0.2
 sudo iptables -t nat -A POSTROUTING -o wg0 -p udp --dport "$PRT" -d 10.0.0.2 -j SNAT --to-source 10.0.0.1
 sudo netfilter-persistent save
 echo
@@ -73,10 +73,10 @@ PUBLICKEY=$(cat publickey)
 cat << WG > /etc/wireguard/wg0.conf
 [Interface]
 PrivateKey = $PRIVATEKEY
-Address = 10.0.0.1/24, fd86:ea04:1115::1/64
+Address = 10.0.0.1/24
 ListenPort = 51820
-PostUp = iptables -A FORWARD -i wg0 -j ACCEPT; iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE; ip6tables -A FORWARD -i wg0 -j ACCEPT; ip6tables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
-PostDown = iptables -D FORWARD -i wg0 -j ACCEPT; iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE; ip6tables -D FORWARD -i wg0 -j ACCEPT; ip6tables -t nat -D POSTROUTING -o eth0 -j MASQUERADE
+PostUp = iptables -A FORWARD -i wg0 -j ACCEPT; iptables -t nat -A POSTROUTING -o ens3 -j MASQUERADE; ip6tables -A FORWARD -i wg0 -j ACCEPT; ip6tables -t nat -A POSTROUTING -o ens3 -j MASQUERADE
+PostDown = iptables -D FORWARD -i wg0 -j ACCEPT; iptables -t nat -D POSTROUTING -o ens3 -j MASQUERADE; ip6tables -D FORWARD -i wg0 -j ACCEPT; ip6tables -t nat -D POSTROUTING -o ens3 -j MASQUERADE
 SaveConfig = true
 WG
 
@@ -90,7 +90,7 @@ sed -i -e '/DEFAULT_FORWARD_POLICY/c DEFAULT_FORWARD_POLICY="ACCEPT" ' /etc/defa
 cat << fire >> /etc/ufw/before.rules
 *nat
 :POSTROUTING ACCEPT [0:0]
--A POSTROUTING -o eth0 -j MASQUERADE
+-A POSTROUTING -o ens3 -j MASQUERADE
 COMMIT
 fire
 sudo ufw --force enable
@@ -107,20 +107,21 @@ wg pubkey < /client-keys/privatekey > /client-keys/publickey
 cat << _CLIENT_ > /client-config/client.conf
 [Interface]
 PrivateKey = $(cat /client-keys/privatekey)
-Address = 10.0.0.2/32, fd86:ea04:1115::2/128
+Address = 10.0.0.2/32
 DNS = 1.1.1.1
+# DNS = 8.8.8.8, 8.8.4.4
 [Peer]
 PublicKey = $PUBLICKEY
 AllowedIPs = 0.0.0.0/0, ::/0
 Endpoint = $IPV4:51820
 _CLIENT_
 
-sudo wg set wg0 peer $(cat /client-keys/publickey) allowed-ips 10.0.0.2/32,fd86:ea04:1115::2/128
+sudo wg set wg0 peer $(cat /client-keys/publickey) allowed-ips 10.0.0.2/32
 cat << _SAVE_ >> /etc/wireguard/wg0.conf
 
 [Peer]
 PublicKey = $(cat /client-keys/publickey)
-AllowedIPs = 10.0.0.2/32, fd86:ea04:1115::2/128
+AllowedIPs = 10.0.0.2/32
 _SAVE_
 
 sudo netfilter-persistent save
