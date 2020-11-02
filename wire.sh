@@ -23,8 +23,8 @@ fi
 sudo iptables -A FORWARD -i ens3 -o wg0 -p tcp --syn --dport "$PRT" -m conntrack --ctstate NEW -j ACCEPT
 sudo iptables -A FORWARD -i ens3 -o wg0 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 sudo iptables -A FORWARD -i wg0 -o ens3 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
-sudo iptables -t nat -A PREROUTING -i ens3 -p tcp --dport "$PRT" -j DNAT --to-destination 152.67.166.149
-sudo iptables -t nat -A POSTROUTING -o wg0 -p tcp --dport "$PRT" -d 152.67.166.149 -j SNAT --to-source 10.0.0.4
+sudo iptables -t nat -A PREROUTING -i ens3 -p tcp --dport "$PRT" -j DNAT --to-destination 152.67.162.155
+sudo iptables -t nat -A POSTROUTING -o wg0 -p tcp --dport "$PRT" -d 152.67.162.155 -j SNAT --to-source 10.0.0.4
 sudo netfilter-persistent save
 echo
 done
@@ -42,8 +42,8 @@ fi
 sudo iptables -A FORWARD -i ens3 -o wg0 -p udp --dport "$PRT" -m conntrack --ctstate NEW -j ACCEPT
 sudo iptables -A FORWARD -i ens3 -o wg0 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 sudo iptables -A FORWARD -i wg0 -o ens3 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
-sudo iptables -t nat -A PREROUTING -i ens3 -p udp --dport "$PRT" -j DNAT --to-destination 152.67.166.149
-sudo iptables -t nat -A POSTROUTING -o wg0 -p udp --dport "$PRT" -d 152.67.166.149 -j SNAT --to-source 10.0.0.4
+sudo iptables -t nat -A PREROUTING -i ens3 -p udp --dport "$PRT" -j DNAT --to-destination 152.67.162.155
+sudo iptables -t nat -A POSTROUTING -o wg0 -p udp --dport "$PRT" -d 152.67.162.155 -j SNAT --to-source 10.0.0.4
 sudo netfilter-persistent save
 echo
 done
@@ -107,7 +107,7 @@ wg pubkey < /client-keys/privatekey > /client-keys/publickey
 cat << _CLIENT_ > /client-config/client.conf
 [Interface]
 PrivateKey = $(cat /client-keys/privatekey)
-Address = 152.67.166.149/32
+Address = 152.67.162.155/32
 # DNS = 1.1.1.1
 DNS = 8.8.8.8, 8.8.4.4
 [Peer]
@@ -116,12 +116,12 @@ AllowedIPs = 0.0.0.0/0, ::/0
 Endpoint = $IPV4:51820
 _CLIENT_
 
-sudo wg set wg0 peer $(cat /client-keys/publickey) allowed-ips 152.67.166.149/32
+sudo wg set wg0 peer $(cat /client-keys/publickey) allowed-ips 152.67.162.155/32
 cat << _SAVE_ >> /etc/wireguard/wg0.conf
 
 [Peer]
 PublicKey = $(cat /client-keys/publickey)
-AllowedIPs = 152.67.166.149/32
+AllowedIPs = 152.67.162.155/32
 _SAVE_
 
 sudo netfilter-persistent save
