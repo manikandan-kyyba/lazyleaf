@@ -20,7 +20,7 @@ if [ "$PRT" = "exit" ] || [ "$PRT" = "EXIT" ]
 then
 break
 fi
-sudo iptables -A FORWARD -i eth0 -o wg0 -p tcp --syn --dport $PRT -m conntrack --ctstate NEW -j ACCEPT
+sudo iptables -A FORWARD -i eth0 -o wg0 -p tcp --syn --dport "$PRT" -m conntrack --ctstate NEW -j ACCEPT
 sudo iptables -A FORWARD -i eth0 -o wg0 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 sudo iptables -A FORWARD -i wg0 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 sudo iptables -t nat -A PREROUTING -i eth0 -p tcp --dport "$PRT" -j DNAT --to-destination 10.0.0.2
@@ -39,7 +39,7 @@ if [ "$PRT" = "exit" ] || [ "$PRT" = "EXIT" ]
 then
 break
 fi
-sudo iptables -A FORWARD -i eth0 -o wg0 -p udp --dport $PRT -m conntrack --ctstate NEW -j ACCEPT
+sudo iptables -A FORWARD -i eth0 -o wg0 -p udp --dport "$PRT" -m conntrack --ctstate NEW -j ACCEPT
 sudo iptables -A FORWARD -i eth0 -o wg0 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 sudo iptables -A FORWARD -i wg0 -o eth0 -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 sudo iptables -t nat -A PREROUTING -i eth0 -p udp --dport "$PRT" -j DNAT --to-destination 10.0.0.2
@@ -109,6 +109,7 @@ cat << _CLIENT_ > /client-config/client.conf
 PrivateKey = $(cat /client-keys/privatekey)
 Address = 10.0.0.2/32
 DNS = 1.1.1.1
+# DNS = 8.8.8.8, 8.8.4.4
 [Peer]
 PublicKey = $PUBLICKEY
 AllowedIPs = 0.0.0.0/0, ::/0
