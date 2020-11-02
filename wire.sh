@@ -73,7 +73,7 @@ PUBLICKEY=$(cat publickey)
 cat << WG > /etc/wireguard/wg0.conf
 [Interface]
 PrivateKey = $PRIVATEKEY
-Address = 10.0.0.1/24, fd86:ea04:1115::1/64
+Address = 10.0.0.1/24
 ListenPort = 51820
 PostUp = iptables -A FORWARD -i wg0 -j ACCEPT; iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE; ip6tables -A FORWARD -i wg0 -j ACCEPT; ip6tables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
 PostDown = iptables -D FORWARD -i wg0 -j ACCEPT; iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE; ip6tables -D FORWARD -i wg0 -j ACCEPT; ip6tables -t nat -D POSTROUTING -o eth0 -j MASQUERADE
@@ -107,7 +107,7 @@ wg pubkey < /client-keys/privatekey > /client-keys/publickey
 cat << _CLIENT_ > /client-config/client.conf
 [Interface]
 PrivateKey = $(cat /client-keys/privatekey)
-Address = 10.0.0.2/32, fd86:ea04:1115::2/128
+Address = 10.0.0.2/32
 DNS = 1.1.1.1
 [Peer]
 PublicKey = $PUBLICKEY
@@ -115,12 +115,12 @@ AllowedIPs = 0.0.0.0/0, ::/0
 Endpoint = $IPV4:51820
 _CLIENT_
 
-sudo wg set wg0 peer $(cat /client-keys/publickey) allowed-ips 10.0.0.2/32,fd86:ea04:1115::2/128
+sudo wg set wg0 peer $(cat /client-keys/publickey) allowed-ips 10.0.0.2/32
 cat << _SAVE_ >> /etc/wireguard/wg0.conf
 
 [Peer]
 PublicKey = $(cat /client-keys/publickey)
-AllowedIPs = 10.0.0.2/32, fd86:ea04:1115::2/128
+AllowedIPs = 10.0.0.2/32
 _SAVE_
 
 sudo netfilter-persistent save
