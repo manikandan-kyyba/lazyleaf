@@ -60,7 +60,7 @@ else
 IPV4=$(curl -4 icanhazip.com)
 IPV6=$(curl -6 icanhazip.com)
 sudo apt-get update && apt-get upgrade -y
-sudo apt-get install software-properties-common iptables ufw resolvconf p7zip-full openssl iptables-persistent  -y
+sudo apt-get install software-properties-common iptables ufw resolvconf p7zip-full openssl iptables-persistent -y
 sudo add-apt-repository ppa:wireguard/wireguard -y
 sudo apt-get install wireguard -y
 
@@ -84,7 +84,7 @@ sudo chmod 600 /etc/wireguard/ -R
 sed -i -e '/net.ipv4.ip_forward/c net.ipv4.ip_forward=1  ' /etc/sysctl.conf
 sed -i -e '/net.ipv6.conf.all.forwarding/c net.ipv6.conf.all.forwarding=1 ' /etc/sysctl.conf
 sudo sysctl -p
-sudo ufw allow 22/tcp 
+sudo ufw allow 22/tcp
 sed -i -e '/DEFAULT_FORWARD_POLICY/c DEFAULT_FORWARD_POLICY="ACCEPT" ' /etc/default/ufw
 
 cat << fire >> /etc/ufw/before.rules
@@ -96,6 +96,8 @@ fire
 sudo ufw --force enable
 sudo systemctl restart ufw
 sudo ufw allow 51820/udp
+sudo ufw allow 51213/udp
+
 wg-quick up wg0
 sudo systemctl enable wg-quick@wg0
 mkdir /client-config
