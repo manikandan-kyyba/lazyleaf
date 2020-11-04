@@ -38,11 +38,11 @@ sudo sysctl -p
 
 sudo sysctl --system
 
-sudo systemctl start wg-quick@wg0
+sudo systemctl status wg-quick@wg0
 
 sudo systemctl enable wg-quick@wg0
 
-sudo systemctl status wg-quick@wg0
+sudo systemctl start wg-quick@wg0
 
 sudo systemctl restart wg-quick@wg0
 
@@ -96,9 +96,4 @@ https://www.sigmdel.ca/michel/ha/wireguard/wireguard_02_en.html#installing_wg_ra
 
 https://engineerworkshop.com/blog/how-to-set-up-wireguard-on-a-raspberry-pi/
 https://www.wundertech.net/how-to-connect-a-raspberry-pi-to-a-wireguard-vpn-server/
-
-
-Rp4 public key aVHXVwMvL4zJKfVTEcA4PiTMfAojn3UBJN5L6jp4fGM=         +Hg
-
-Oracle Cloud Public Key: uq6NmfnuQABTtFF1axgtahsUXs192QYhL/JkTFD1RTY=        zNX
 
