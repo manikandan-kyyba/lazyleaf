@@ -96,10 +96,10 @@ fire
 sudo ufw --force enable
 sudo systemctl restart ufw
 sudo ufw allow 51820/udp
-sudo ufw allow 51213/udp
 
 wg-quick up wg0
 sudo systemctl enable wg-quick@wg0
+sudo systemctl restart wg-quick@wg0
 mkdir /client-config
 mkdir /client-keys
 
